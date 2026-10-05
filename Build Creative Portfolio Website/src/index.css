@@ -1,0 +1,86 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter+Tight:ital,wght@0,300..800;1,300..500&family=Geist+Mono:wght@400;500&display=swap');
+@import 'tailwindcss';
+
+@theme {
+  --font-sans: 'Inter Tight', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'Geist Mono', ui-monospace, monospace;
+  --color-ink: #050505;
+  --color-coal: #0b0d10;
+  --color-navy: #0c1424;
+  --color-bone: #ecebe6;
+  --color-mute: #8a8f98;
+  --color-line: rgb(236 235 230 / 0.1);
+  --color-signal: #9fb4d9;
+  /* Radius scale — panel > media > control > chip */
+  --radius-panel: 36px;
+  --radius-media: 22px;
+  --radius-control: 14px;
+  --radius-chip: 9px;
+  --ease-out-soft: cubic-bezier(.2,.8,.2,1);
+  --ease-liquid: cubic-bezier(.34,1.4,.5,1);
+}
+
+@layer base {
+  html { background: var(--color-ink); color: var(--color-bone); scroll-behavior: smooth; scrollbar-width: none; }
+  html::-webkit-scrollbar { display: none; }
+  body { font-family: var(--font-sans); -webkit-font-smoothing: antialiased; overflow-x: clip; }
+  img { -webkit-user-drag: none; }
+  ::selection { background: var(--color-bone); color: var(--color-ink); }
+  @media (hover: hover) and (pointer: fine) { body.has-cursor, body.has-cursor * { cursor: none !important; } }
+}
+
+@layer components {
+  .label { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; }
+
+  /* Liquid glass: one blur, a specular top edge, and a gradient rim instead of a flat border. */
+  .liquid {
+    position: relative; isolation: isolate;
+    background: linear-gradient(180deg, rgb(255 255 255 / 0.07), rgb(255 255 255 / 0.015)) , rgb(12 16 24 / 0.55);
+    backdrop-filter: blur(16px) saturate(160%); -webkit-backdrop-filter: blur(16px) saturate(160%);
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.14), inset 0 -1px 0 rgb(255 255 255 / 0.03), 0 20px 50px -24px rgb(0 0 0 / 0.7);
+  }
+  .liquid::before {
+    content: ''; position: absolute; inset: 0; border-radius: inherit; padding: 1px; pointer-events: none; z-index: -1;
+    background: linear-gradient(140deg, rgb(255 255 255 / 0.28), rgb(255 255 255 / 0.04) 35%, rgb(159 180 217 / 0.06) 65%, rgb(255 255 255 / 0.18));
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask-composite: exclude;
+  }
+  /* Same look without backdrop-filter — for surfaces over static content or large areas. */
+  .liquid-flat { position: relative; background: linear-gradient(180deg, rgb(255 255 255 / 0.05), rgb(255 255 255 / 0.01)), #0d1118; box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.1); }
+  .liquid-flat::before { content: ''; position: absolute; inset: 0; border-radius: inherit; padding: 1px; pointer-events: none;
+    background: linear-gradient(140deg, rgb(255 255 255 / 0.2), transparent 40%, rgb(255 255 255 / 0.08));
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask-composite: exclude; }
+
+  /* Specular sheen that follows the pointer inside a surface (set --sx/--sy locally). */
+  .sheen::after { content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; opacity: 0; transition: opacity .4s;
+    background: radial-gradient(240px circle at var(--sx, 50%) var(--sy, 0%), rgb(255 255 255 / 0.12), transparent 60%); }
+  .sheen:hover::after { opacity: 1; }
+
+  /* Static grain — no animation, so it never repaints. */
+  .grain::after { content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 60; opacity: 0.045;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); }
+
+  /* Scroll reveals (IntersectionObserver adds .in). --d staggers siblings. */
+  .reveal { opacity: 0; transform: translate3d(0, 32px, 0) scale(.985); transition: opacity .8s var(--ease-out-soft), transform .9s var(--ease-out-soft); transition-delay: var(--d, 0ms); }
+  .reveal.in { opacity: 1; transform: none; }
+  .reveal-media { overflow: hidden; }
+  .reveal-media img { transform: scale(1.12); transition: transform 1.4s var(--ease-out-soft), opacity .6s; }
+  .reveal.in .reveal-media img, .reveal-media.in img { transform: scale(1); }
+  .line-mask { display: block; overflow: hidden; padding-bottom: .06em; }
+  .line-mask > span { display: block; transform: translate3d(0, 105%, 0); transition: transform 1s var(--ease-out-soft); transition-delay: var(--d, 0ms); }
+  .in .line-mask > span, .line-mask.in > span { transform: none; }
+
+  .marquee { animation: marquee 50s linear infinite; will-change: transform; }
+  .btn-liquid { transition: transform .5s var(--ease-liquid), background-color .3s, color .3s; }
+  .btn-liquid:active { transform: scale(.96) !important; }
+}
+
+@keyframes marquee { to { transform: translate3d(-50%, 0, 0); } }
+@keyframes rise { from { transform: translate3d(0, 105%, 0); } to { transform: none; } }
+@keyframes fade-up { from { opacity: 0; transform: translate3d(0, 24px, 0) scale(.97); } to { opacity: 1; transform: none; } }
+@keyframes modal-in { from { opacity: 0; transform: scale(.96) translate3d(0, 16px, 0); } to { opacity: 1; transform: none; } }
+@keyframes spin3d { to { transform: rotateX(62deg) rotateZ(360deg); } }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+  .reveal, .line-mask > span, .reveal-media img { opacity: 1; transform: none; }
+}
